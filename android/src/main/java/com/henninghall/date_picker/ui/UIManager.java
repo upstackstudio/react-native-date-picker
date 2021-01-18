@@ -7,8 +7,10 @@ import com.henninghall.date_picker.wheelFunctions.AddOnChangeListener;
 import com.henninghall.date_picker.wheelFunctions.AnimateToDate;
 import com.henninghall.date_picker.wheelFunctions.Refresh;
 import com.henninghall.date_picker.wheelFunctions.SetDate;
+import com.henninghall.date_picker.wheelFunctions.SetDividerHeight;
 import com.henninghall.date_picker.wheelFunctions.TextColor;
 import com.henninghall.date_picker.wheelFunctions.UpdateVisibility;
+import com.henninghall.date_picker.wheelFunctions.HorizontalPadding;
 import com.henninghall.date_picker.wheels.Wheel;
 
 import java.text.SimpleDateFormat;
@@ -25,7 +27,6 @@ public class UIManager {
         this.state = state;
         this.rootView = rootView;
         wheels = new Wheels(state, rootView);
-        fadingOverlay = new FadingOverlay(state, rootView);
         addOnChangeListener();
     }
 
@@ -38,6 +39,8 @@ public class UIManager {
     }
 
     public void updateFadeToColor(){
+        if(state.derived.hasNativeStyle()) return;
+        fadingOverlay = new FadingOverlay(state, rootView);
         fadingOverlay.updateColor();
     }
 
@@ -66,11 +69,12 @@ public class UIManager {
         return new SimpleDateFormat(wheels.getFormatPattern(), state.getLocale());
     }
 
-    String getDateString() {
+    String getDisplayValueString() {
         return wheels.getDisplayValue();
     }
 
     void animateToDate(Calendar date) {
+        wheels.applyOnInVisible(new SetDate(date));
         wheels.applyOnVisible(new AnimateToDate(date));
     }
 
@@ -79,5 +83,11 @@ public class UIManager {
         wheels.applyOnAll(new AddOnChangeListener(onWheelChangeListener));
     }
 
+    public void updateDividerHeight() {
+        wheels.updateDividerHeight();
+    }
 
+    public void updateWheelPadding() {
+        wheels.applyOnVisible(new HorizontalPadding());
+    }
 }

@@ -5,15 +5,14 @@ import android.graphics.Paint;
 import java.util.*;
 import com.henninghall.date_picker.*;
 import com.henninghall.date_picker.models.Mode;
-
-import cn.carbswang.android.numberpickerview.library.NumberPickerView;
+import com.henninghall.date_picker.pickers.Picker;
+import com.henninghall.date_picker.wheelFunctions.HorizontalPadding;
 
 public class MonthWheel extends Wheel
 {
-    public MonthWheel(final NumberPickerView pickerView, final State id) {
-        super(pickerView, id);
+    public MonthWheel(final Picker picker, final State id) {
+        super(picker, id);
     }
-
 
     @Override
     public ArrayList<String> getValues() {
@@ -34,6 +33,11 @@ public class MonthWheel extends Wheel
     }
 
     @Override
+    public boolean wrapSelectorWheel() {
+        return true;
+    }
+
+    @Override
     public String getFormatPattern() {
         return "LLLL";
     }
@@ -41,6 +45,11 @@ public class MonthWheel extends Wheel
     @Override
     public Paint.Align getTextAlign() {
         return Paint.Align.LEFT;
+    }
+
+    @Override
+    public int getHorizontalPadding() {
+        return 1;
     }
 
 

@@ -2,6 +2,7 @@ package com.henninghall.date_picker.wheels;
 
 import android.graphics.Paint;
 
+import com.henninghall.date_picker.pickers.Picker;
 import com.henninghall.date_picker.State;
 import com.henninghall.date_picker.Utils;
 import com.henninghall.date_picker.models.Mode;
@@ -9,11 +10,9 @@ import com.henninghall.date_picker.models.Mode;
 import java.util.ArrayList;
 import java.util.Calendar;
 
-import cn.carbswang.android.numberpickerview.library.NumberPickerView;
-
 public class MinutesWheel extends Wheel {
 
-    public MinutesWheel(NumberPickerView picker, State id) {
+    public MinutesWheel(Picker picker, State id) {
         super(picker, id);
     }
 
@@ -37,13 +36,18 @@ public class MinutesWheel extends Wheel {
     }
 
     @Override
+    public boolean wrapSelectorWheel() {
+        return true;
+    }
+
+    @Override
     public String getFormatPattern() {
         return "mm";
     }
 
     @Override
     public Paint.Align getTextAlign() {
-        return Utils.usesAmPm() ? Paint.Align.RIGHT: Paint.Align.LEFT;
+        return state.derived.hasOnly2Wheels() ? Paint.Align.LEFT : Paint.Align.RIGHT;
     }
 
 }

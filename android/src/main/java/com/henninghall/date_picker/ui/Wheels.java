@@ -2,11 +2,13 @@ package com.henninghall.date_picker.ui;
 
 import android.view.View;
 
+import com.henninghall.date_picker.models.Variant;
+import com.henninghall.date_picker.pickers.Picker;
 import com.henninghall.date_picker.R;
 import com.henninghall.date_picker.State;
-import com.henninghall.date_picker.Utils;
 import com.henninghall.date_picker.models.WheelType;
 import com.henninghall.date_picker.models.Mode;
+import com.henninghall.date_picker.wheelFunctions.SetDividerHeight;
 import com.henninghall.date_picker.wheelFunctions.SetShowCount;
 import com.henninghall.date_picker.wheelFunctions.WheelFunction;
 import com.henninghall.date_picker.wheels.AmPmWheel;
@@ -20,7 +22,6 @@ import com.henninghall.date_picker.wheels.YearWheel;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
@@ -29,6 +30,8 @@ import cn.carbswang.android.numberpickerview.library.NumberPickerView;
 public class Wheels {
 
     private final State state;
+    private final NumberPickerView emptyStart;
+    private final NumberPickerView emptyEnd;
     private HourWheel hourWheel;
     private DayWheel dayWheel;
     private MinutesWheel minutesWheel;
@@ -38,7 +41,6 @@ public class Wheels {
     private YearWheel yearWheel;
     private View rootView;
     private final PickerWrapper pickerWrapper;
-    private final EmptyWheels emptyWheels;
 
     private HashMap<WheelType, Wheel> wheelPerWheelType;
 
@@ -54,23 +56,14 @@ public class Wheels {
         minutesWheel = new MinutesWheel(getPickerWithId(R.id.minutes), state);
         ampmWheel = new AmPmWheel(getPickerWithId(R.id.ampm), state);
         hourWheel = new HourWheel(getPickerWithId(R.id.hour), state);
+        emptyStart = (NumberPickerView) rootView.findViewById(R.id.empty_start);
+        emptyEnd = (NumberPickerView) rootView.findViewById(R.id.empty_end);
         wheelPerWheelType = getWheelPerType();
-
-        emptyWheels = new EmptyWheels(rootView, pickerWrapper, state);
         changeAmPmWhenPassingMidnightOrNoon();
     }
 
-    private NumberPickerView getPickerWithId(int id){
-        return (NumberPickerView) rootView.findViewById(id);
-    }
-
-    private Collection<Wheel> getVisible() {
-        ArrayList<WheelType> wheelTypes = state.derived.getVisibleWheels();
-        Collection<Wheel> wheels = new ArrayList<>();
-        for (WheelType type: wheelTypes){
-            wheels.add(getWheel(type));
-        }
-        return wheels;
+    private Picker getPickerWithId(int id){
+        return (Picker) rootView.findViewById(id);
     }
 
     void applyOnAll(WheelFunction function) {
@@ -78,36 +71,79 @@ public class Wheels {
     }
 
     void applyOnVisible(WheelFunction function) {
-        for (Wheel wheel: getVisible()) function.apply(wheel);
+        for(Wheel wheel: getAll()) {
+            if(wheel.visible()) function.apply(wheel);
+        }
+    }
+
+    void applyOnInVisible(WheelFunction function) {
+        for(Wheel wheel: getAll()) {
+            if(!wheel.visible()) function.apply(wheel);
+        }
     }
 
     void updateHeight() {
         int shownCount = state.derived.getShownCount();
         applyOnAll(new SetShowCount(shownCount));
-        emptyWheels.setShownCount(shownCount);
+        if(state.getVariant() == Variant.iosClone) {
+            emptyStart.setShownCount(shownCount);
+            emptyEnd.setShownCount(shownCount);
+        }
+    }
+
+    void updateDividerHeight() {
+        int height = state.getDividerHeight();
+        applyOnAll(new SetDividerHeight(height));
+        if(state.getVariant() == Variant.iosClone) {
+            emptyStart.setDividerHeight(height);
+            emptyEnd.setDividerHeight(height);
+        }
     }
 
     void updateWheelOrder() {
         pickerWrapper.removeAll();
+        if(state.getVariant() == Variant.iosClone) pickerWrapper.addPicker(emptyStart);
         addInOrder();
-        addEmpty();
+        if(state.getVariant() == Variant.iosClone) pickerWrapper.addPicker(emptyEnd);
     }
 
     Wheel getWheel(WheelType type){
         return wheelPerWheelType.get(type);
     }
 
-    String getDateString() {
+    String getDateTimeString(int daysToSubtract) {
+        return getDateString(daysToSubtract) + " " + getTimeString();
+    }
+
+    private String getDateModeString(int daysToSubtract) {
         ArrayList<Wheel> wheels = getOrderedVisibleWheels();
-        String dateString = (state.getMode() == Mode.date)
-                ? wheels.get(0).getValue() + " "
-                + wheels.get(1).getValue() + " "
-                + wheels.get(2).getValue()
-                : dayWheel.getValue();
-        return dateString
-                + " " + hourWheel.getValue()
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 3; i++) {
+            if (i != 0) sb.append(" ");
+            Wheel w = wheels.get(i);
+            if (w instanceof DateWheel) {
+                sb.append(w.getPastValue(daysToSubtract));
+            }
+            else sb.append(w.getValue());
+        }
+        return sb.toString();
+    }
+
+    private String getDateString(int daysToSubtract){
+        if(state.getMode() == Mode.date ){
+            return getDateModeString(daysToSubtract);
+        }
+        return dayWheel.getValue();
+    }
+
+    private String getTimeString(){
+        return hourWheel.getValue()
                 + " " + minutesWheel.getValue()
                 + ampmWheel.getValue();
+    }
+
+    String getDateTimeString() {
+        return getDateTimeString(0);
     }
 
     String getDisplayValue() {
@@ -122,7 +158,7 @@ public class Wheels {
         ArrayList<WheelType> wheels = state.derived.getOrderedVisibleWheels();
         for (WheelType wheelType : wheels) {
             Wheel wheel = getWheel(wheelType);
-            pickerWrapper.addPicker(wheel.picker);
+            pickerWrapper.addPicker(wheel.picker.getView());
         }
     }
 
@@ -135,10 +171,10 @@ public class Wheels {
     }
 
     private void changeAmPmWhenPassingMidnightOrNoon() {
-        hourWheel.picker.setOnValueChangeListenerInScrolling(new NumberPickerView.OnValueChangeListenerInScrolling() {
+        hourWheel.picker.setOnValueChangeListenerInScrolling(new Picker.OnValueChangeListenerInScrolling() {
             @Override
-            public void onValueChangeInScrolling(NumberPickerView picker, int oldVal, int newVal) {
-                if(Utils.usesAmPm()){
+            public void onValueChangeInScrolling(Picker picker, int oldVal, int newVal) {
+                if(state.derived.usesAmPm()){
                     String oldValue = hourWheel.getValueAtIndex(oldVal);
                     String newValue = hourWheel.getValueAtIndex(newVal);
                     boolean passingNoonOrMidnight = (oldValue.equals("12") && newValue.equals("11")) || oldValue.equals("11") && newValue.equals("12");
@@ -181,8 +217,10 @@ public class Wheels {
         }};
     }
 
-    private void addEmpty() {
-        emptyWheels.add();
+    public boolean hasSpinningWheel() {
+        for(Wheel wheel: getAll()) {
+            if(wheel.picker.isSpinning()) return true;
+        }
+        return false;
     }
-
 }

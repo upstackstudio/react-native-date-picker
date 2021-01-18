@@ -40,11 +40,10 @@ const modeCheck = new PropCheck(
   "Invalid mode. Valid modes: 'datetime', 'date', 'time'"
 )
 
-const colorCheck = new PropCheck(
-  props => 
-    props && props.textColor && !props.textColor.startsWith("#"),
-  "Invalid text color. Must be a hex string."
+const androidVariantCheck = new PropCheck(
+  props =>
+    props && props.androidVariant && !['nativeAndroid', 'iosClone'].includes(props.androidVariant),
+  "Invalid android variant. Valid modes: 'nativeAndroid', 'iosClone'"
 )
 
-
-const checks = [widthCheck, heightCheck, modeCheck, colorCheck]
+const checks = [widthCheck, heightCheck, modeCheck, androidVariantCheck]

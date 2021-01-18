@@ -3,7 +3,8 @@ package com.henninghall.date_picker.wheels;
 import android.graphics.Paint;
 import android.view.View;
 
-import cn.carbswang.android.numberpickerview.library.NumberPickerView;
+import com.henninghall.date_picker.models.Mode;
+import com.henninghall.date_picker.pickers.Picker;
 import com.henninghall.date_picker.State;
 
 import java.text.SimpleDateFormat;
@@ -17,6 +18,7 @@ public abstract class Wheel {
     private Calendar userSetValue;
 
     public abstract boolean visible();
+    public abstract boolean wrapSelectorWheel();
     public abstract Paint.Align getTextAlign();
     public abstract String getFormatPattern();
     public abstract ArrayList<String> getValues();
@@ -26,14 +28,15 @@ public abstract class Wheel {
     }
 
     private ArrayList<String> values = new ArrayList<>();
-    public NumberPickerView picker;
+    public Picker picker;
     public SimpleDateFormat format;
 
-    public Wheel(NumberPickerView picker, State state) {
+    public Wheel(Picker picker, State state) {
         this.state = state;
         this.picker = picker;
         this.format = new SimpleDateFormat(getFormatPattern(), state.getLocale());
         picker.setTextAlign(getTextAlign());
+        picker.setWrapSelectorWheel(wrapSelectorWheel());
     }
 
     private int getIndexOfDate(Calendar date){
@@ -49,6 +52,14 @@ public abstract class Wheel {
         if(!visible()) return format.format(userSetValue.getTime());
         return getValueAtIndex(getIndex());
     }
+
+    public String getPastValue(int subtractIndex) {
+        if(!visible()) return format.format(userSetValue.getTime());
+        int size = values.size();
+        int pastValueIndex = (getIndex() + size - subtractIndex) % size;
+        return getValueAtIndex(pastValueIndex);
+    }
+
 
     private int getIndex() {
         return picker.getValue();
@@ -113,4 +124,19 @@ public abstract class Wheel {
         return getFormat(locale).format(cal.getTime());
     }
 
+    public void setHorizontalPadding(){
+        picker.setItemPaddingHorizontal(getHorizontalPadding());
+    }
+
+    public int getHorizontalPadding() {
+        Mode mode = state.getMode();
+        if(state.derived.hasOnly2Wheels()) return 10;
+        switch (mode){
+            case date: return 15;
+            case time:
+            case datetime:
+            default:
+                return 5;
+        }
+    }
 }

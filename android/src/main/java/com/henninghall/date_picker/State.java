@@ -1,7 +1,12 @@
 package com.henninghall.date_picker;
 
 import com.facebook.react.bridge.Dynamic;
+import com.henninghall.date_picker.models.Is24HourSource;
 import com.henninghall.date_picker.models.Mode;
+import com.henninghall.date_picker.models.Variant;
+import com.henninghall.date_picker.props.DividerHeightProp;
+import com.henninghall.date_picker.props.Is24hourSourceProp;
+import com.henninghall.date_picker.props.VariantProp;
 import com.henninghall.date_picker.props.DateProp;
 import com.henninghall.date_picker.props.FadeToColorProp;
 import com.henninghall.date_picker.props.HeightProp;
@@ -22,7 +27,7 @@ import java.util.TimeZone;
 public class State {
 
     private final DateProp dateProp = new DateProp();
-    private final Prop modeProp = new ModeProp();
+    private final ModeProp modeProp = new ModeProp();
     private final LocaleProp localeProp = new LocaleProp();
     private final FadeToColorProp fadeToColorProp = new FadeToColorProp();
     private final TextColorProp textColorProp = new TextColorProp();
@@ -31,6 +36,9 @@ public class State {
     private final MaximumDateProp maximumDateProp = new MaximumDateProp();
     private final UtcProp utcProp = new UtcProp();
     private final HeightProp heightProp = new HeightProp();
+    private final VariantProp variantProp = new VariantProp();
+    private final DividerHeightProp dividerHeightProp = new DividerHeightProp();
+    private final Is24hourSourceProp is24hourSourceProp = new Is24hourSourceProp();
 
     private final HashMap props = new HashMap<String, Prop>() {{
         put(DateProp.name, dateProp);
@@ -43,6 +51,9 @@ public class State {
         put(MaximumDateProp.name, maximumDateProp);
         put(UtcProp.name, utcProp);
         put(HeightProp.name, heightProp);
+        put(VariantProp.name, variantProp);
+        put(DividerHeightProp.name, dividerHeightProp);
+        put(Is24hourSourceProp.name, is24hourSourceProp);
     }};
     public DerivedData derived;
 
@@ -93,9 +104,12 @@ public class State {
         return utc ? TimeZone.getTimeZone("UTC") : TimeZone.getDefault();
     }
 
+    public String getDateString() {
+        return (String) dateProp.getValue();
+    }
+
     public Calendar getDate() {
-        String date = (String) dateProp.getValue();
-        return Utils.isoToCalendar(date, getTimeZone());
+        return Utils.isoToCalendar(getDateString(), getTimeZone());
     }
 
     public Integer getHeight() {
@@ -106,5 +120,16 @@ public class State {
         return localeProp.getLanguageTag();
     }
 
+    public Variant getVariant(){
+        return variantProp.getValue();
+    }
+
+    public int getDividerHeight() {
+        return dividerHeightProp.getValue();
+    }
+
+    public Is24HourSource getIs24HourSource() {
+        return is24hourSourceProp.getValue();
+    }
 
 }

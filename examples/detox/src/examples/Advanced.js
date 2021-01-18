@@ -13,6 +13,7 @@ import MinuteInterval from '../propPickers/MinuteInterval'
 import Scroll from '../propPickers/Scroll'
 import CustomPropValue from '../CustomPropValue'
 import { readableDate } from '../utils'
+import Variant from '../propPickers/Variant'
 
 Date.prototype.addHours = function(h) {
   this.setTime(this.getTime() + h * 60 * 60 * 1000)
@@ -37,6 +38,7 @@ export default class Advanced extends Component {
     timeZoneOffsetInMinutes: undefined,
     minuteInterval: 1,
     dateString: '',
+    androidVariant: 'iosClone',
   }
 
   render() {
@@ -48,10 +50,11 @@ export default class Advanced extends Component {
           }
         />
         <DatePicker
-          ref={ref => (this.ref = ref)}
+          innerRef={ref => (this.ref = ref)}
           date={this.state.date}
           onDateChange={this.setDate}
           onDateStringChange={this.setDateString}
+          androidVariant={this.state.androidVariant}
           locale={this.state.locale}
           minuteInterval={this.state.minuteInterval}
           minimumDate={this.state.minimumDate}
@@ -85,6 +88,15 @@ export default class Advanced extends Component {
         <Scroll
           scroll={this.scroll}
           reset={() => this.setState({ date: getInitialDate() })}
+        />
+      ),
+    },
+    {
+      name: 'androidVariant',
+      component: (
+        <Variant
+          selected={this.state.androidVariant}
+          onChange={androidVariant => this.setState({ androidVariant })}
         />
       ),
     },
@@ -161,7 +173,10 @@ export default class Advanced extends Component {
     {
       name: 'fadeToColor',
       component: (
-        <FadeToColor onChange={() => this.props.setBackground(randomColor())} />
+        <FadeToColor 
+          onChange={() => this.props.setBackground(randomColor())} 
+          setNone={() => this.props.setBackground("none")} 
+        />
       ),
     },
     {

@@ -1,12 +1,17 @@
 package com.henninghall.date_picker;
 
+import android.text.format.DateFormat;
 import android.util.Log;
 
 import com.henninghall.date_picker.models.Mode;
+import com.henninghall.date_picker.models.Variant;
 import com.henninghall.date_picker.models.WheelType;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import static com.henninghall.date_picker.models.Is24HourSource.*;
 
 public class DerivedData {
     private final State state;
@@ -37,7 +42,7 @@ public class DerivedData {
                 break;
             }
         }
-        if((mode == Mode.time || mode == Mode.datetime) && Utils.usesAmPm()){
+        if((mode == Mode.time || mode == Mode.datetime) && state.derived.usesAmPm()){
             visibleWheels.add(WheelType.AM_PM);
         }
         return visibleWheels;
@@ -54,7 +59,10 @@ public class DerivedData {
     }
 
     private ArrayList<WheelType> getOrderedWheels() {
-        String dateTimePattern = LocaleUtils.getDateTimePattern(state.getLocale());
+        String dateTimePatternOld = LocaleUtils.getDateTimePattern(state.getLocale());
+        String dateTimePattern = dateTimePatternOld.replaceAll("\\('(.+?)'\\)","\\${$1}")
+                .replaceAll("'.+?'","")
+                .replaceAll("\\$\\{(.+?)\\}","('$1')");
         ArrayList<WheelType> unorderedTypes = new ArrayList(Arrays.asList(WheelType.values()));
         ArrayList<WheelType> orderedWheels = new ArrayList<>();
 
@@ -62,9 +70,9 @@ public class DerivedData {
         unorderedTypes.remove(WheelType.DAY);
         orderedWheels.add(WheelType.DAY);
 
-        for (char ch : dateTimePattern.toCharArray()){
+        for (char c: dateTimePattern.toCharArray()){
             try {
-                WheelType wheelType = Utils.patternCharToWheelType(ch);
+                WheelType wheelType = Utils.patternCharToWheelType(c);
                 if (unorderedTypes.contains(wheelType)) {
                     unorderedTypes.remove(wheelType);
                     orderedWheels.add(wheelType);
@@ -94,6 +102,27 @@ public class DerivedData {
         int showCount = state.getHeight() / DP_PER_SHOW_SHOW_COUNT;
         int oddShowCount = showCount % 2 == 0 ? showCount + 1 : showCount;
         return oddShowCount;
+    }
+
+    public boolean hasNativeStyle() {
+        return state.getVariant() == Variant.nativeAndroid;
+    }
+
+    public int getRootLayout() {
+        switch (state.getVariant()){
+            case nativeAndroid: return R.layout.native_picker;
+            case iosClone: return R.layout.ios_clone;
+            default: return R.layout.ios_clone;
+        }
+    }
+
+    public boolean usesAmPm(){
+        if(state.getIs24HourSource() == locale) return LocaleUtils.localeUsesAmPm(state.getLocale());
+        return Utils.deviceUsesAmPm();
+    }
+
+    public boolean hasOnly2Wheels(){
+        return state.getMode() == Mode.time && !usesAmPm();
     }
 
 }
